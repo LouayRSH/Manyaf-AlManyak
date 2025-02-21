@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أحمد يطارد نايف</title>
+    <style>
+        body {
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        canvas {
+            background-color: #ffffff;
+            display: block;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>أحمد يطارد نايف</h1>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // تحميل الصور
+        const nayefImg = new Image();
+        nayefImg.src = "nayef.png";
+        
+        const ahmedImg = new Image();
+        ahmedImg.src = "ahmed.png";
+        
+        const obstacleImg = new Image();
+        obstacleImg.src = "obstacle.png";
+        
+        const loseSound = new Audio("lose.mp3");
+
+        let nayef = {
+            x: 50, 
+            y: 300, 
+            width: 50, 
+            height: 50, 
+            velocityY: 0, 
+            gravity: 1,
+            jumpPower: -22, // زيادة قوة القفز لجعل القفزة أطول
+            isJumping: false,
+            speed: 0,
+            collided: false 
+        };
+
+        let obstacles = [];
+        function spawnObstacle() {
+            obstacles.push({ x: 800, y: 330, width: 50, height: 50 });
+        }
+
+        let gameOver = false;
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.drawImage(nayefImg, nayef.x, nayef.y, nayef.width, nayef.height);
+            
+            obstacles.forEach(obstacle => {
+                ctx.drawImage(obstacleImg, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            });
+
+            if (gameOver) {
+                ctx.fillStyle = "red";
+                ctx.font = "30px Arial";
+                ctx.fillText("لقد خسر نايف!", canvas.width / 2 - 80, canvas.height / 2);
+                ctx.drawImage(ahmedImg, canvas.width / 2 - 50, canvas.height / 2, 100, 100);
+            }
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            nayef.velocityY += nayef.gravity;
+            nayef.y += nayef.velocityY;
+
+            if (nayef.y > 300) {
+                nayef.y = 300;
+                nayef.isJumping = false;
+            }
+            
+            obstacles.forEach((obstacle, index) => {
+                obstacle.x -= 5;
+                if (obstacle.x < -50) {
+                    obstacles.splice(index, 1);
+                }
+            });
+            
+            obstacles.forEach(obstacle => {
+                if (
+                    nayef.x < obstacle.x + obstacle.width &&
+                    nayef.x + nayef.width > obstacle.x &&
+                    nayef.y < obstacle.y + obstacle.height &&
+                    nayef.y + nayef.height > obstacle.y
+                ) {
+                    gameOver = true;
+                    loseSound.play();
+                }
+            });
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function jump() {
+            if (gameOver) {
+                document.location.reload();
+            } else if (!nayef.isJumping) {
+                nayef.velocityY = nayef.jumpPower;
+                nayef.isJumping = true;
+            }
+        }
+
+        document.addEventListener("keydown", function(event) {
+            if (event.code === "Space") {
+                jump();
+            }
+        });
+
+        document.addEventListener("touchstart", function() {
+            jump();
+        });
+document.addEventListener("click", function() {
+    jump();
+});
+
+        setInterval(spawnObstacle, 2000);
+        gameLoop();
+    </script>
+</body>
+</html>
